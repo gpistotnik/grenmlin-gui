@@ -9,8 +9,8 @@ import networkx as nx
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QAction,
-    QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsLineItem,
-    QMessageBox, QInputDialog, QGraphicsItem
+    QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsLineItem, QDialog,
+    QMessageBox, QInputDialog, QGraphicsItem, QVBoxLayout, QLineEdit, QPushButton, QLabel, QTableWidget, QTableWidgetItem
 )
 from PyQt5.QtGui import (
     QPainter, QPen, QBrush, QColor, QFont, QPolygonF
@@ -451,6 +451,11 @@ class MainWindow(QMainWindow):
         self.output_position = [300, 50]
         self.node_spacing = 60
 
+        # Simulation Parameters
+        self.simulation_duration = 100
+        self.simulation_intervals = []
+        self.node_inputs = {}
+
         # b) Toolbar
         self.toolbar = QToolBar("Tools")
         self.addToolBar(self.toolbar)
@@ -481,6 +486,11 @@ class MainWindow(QMainWindow):
         self.act_delete_edge.triggered.connect(self.delete_selected_edge)
         self.toolbar.addAction(self.act_delete_edge)
 
+        # Simulation Controls
+        self.act_simulation = QAction("Open Simulation GUI", self)
+        self.act_simulation.triggered.connect(self.open_simulation_gui)
+        self.toolbar.addAction(self.act_simulation)
+
         # Plot GRN
         self.act_plot = QAction("Plot GRN", self)
         self.act_plot.triggered.connect(self.plot_grn)
@@ -494,6 +504,7 @@ class MainWindow(QMainWindow):
         node_data = {"label": f"I{self.input_counter}", "node_type": "input"}
         node = NodeItem(self.input_position[0], self.input_position[1], diameter=50, node_data=node_data)
         self.scene.addItem(node)
+        self.node_inputs[node_data['label']] = []
         self.input_counter += 1
         self.input_position[1] += self.node_spacing
 
@@ -508,7 +519,9 @@ class MainWindow(QMainWindow):
         selected_items = self.scene.selectedItems()
         for item in selected_items:
             if isinstance(item, NodeItem):
-                # Remove connected edges
+                label = item.node_data.get("label")
+                if label in self.node_inputs:
+                    del self.node_inputs[label]
                 for edge in item.edges[:]:
                     self.scene.removeItem(edge)
                 self.scene.removeItem(item)
@@ -518,6 +531,88 @@ class MainWindow(QMainWindow):
         for item in selected_items:
             if isinstance(item, EdgeItem):
                 self.scene.removeItem(item)
+
+    # --- Simulation GUI ---
+    def open_simulation_gui(self):
+        self.sim_window = QDialog(self)
+        self.sim_window.setWindowTitle("Simulation GUI")
+        self.sim_window.setGeometry(100, 100, 600, 400)
+
+        layout = QVBoxLayout()
+
+        # Node Input Table
+        self.node_table = QTableWidget()
+        self.node_table.setColumnCount(1)
+        self.node_table.setHorizontalHeaderLabels(["Node"])
+        self.node_table.setRowCount(len(self.node_inputs))
+        for row, node in enumerate(self.node_inputs.keys()):
+            item = QTableWidgetItem(node)
+            item.setFlags(Qt.ItemIsEnabled)  # Make node names uneditable
+            self.node_table.setItem(row, 0, item)
+        layout.addWidget(self.node_table)
+
+        # Add Interval States Button
+        self.add_interval_btn = QPushButton("Add Interval State")
+        self.add_interval_btn.clicked.connect(self.add_interval_column)
+        layout.addWidget(self.add_interval_btn)
+
+        # Duration Input
+        self.duration_input = QLineEdit(str(self.simulation_duration))
+        self.duration_input.setPlaceholderText("Set Simulation Duration")
+        layout.addWidget(QLabel("Simulation Duration:"))
+        layout.addWidget(self.duration_input)
+
+        # Plot Button
+        self.plot_btn = QPushButton("Plot Simulation")
+        self.plot_btn.clicked.connect(self.plot_simulation)
+        layout.addWidget(self.plot_btn)
+
+        self.sim_window.setLayout(layout)
+        self.sim_window.show()
+
+    def add_interval_column(self):
+        column_count = self.node_table.columnCount()
+        self.node_table.insertColumn(column_count)
+        self.node_table.setHorizontalHeaderItem(column_count, QTableWidgetItem(f"Interval {column_count}"))
+        for row in range(self.node_table.rowCount()):
+            self.node_table.setItem(row, column_count, QTableWidgetItem("50"))
+
+    def plot_simulation(self):
+        import grn
+        import simulator
+
+        my_grn = grn.grn()
+
+        # Add input species
+        for node in self.node_inputs.keys():
+            if node.startswith('I'):
+                my_grn.add_input_species(node)
+
+        # Add output species
+        for item in self.scene.items():
+            if isinstance(item, NodeItem) and item.node_data.get('node_type') == 'output':
+                my_grn.add_species(item.node_data.get('label'), 0.1)
+
+        # Add genes with regulators from edges
+        for item in self.scene.items():
+            if isinstance(item, EdgeItem):
+                src_label = item.source_node.node_data.get('label')
+                tgt_label = item.target_node.node_data.get('label')
+                regulators = [{'name': src_label, 'type': 1, 'Kd': 5, 'n': 2}]
+                products = [{'name': tgt_label}]
+                my_grn.add_gene(10, regulators, products)
+
+        # Prepare simulation data
+        simulation_data = []
+        for col in range(1, self.node_table.columnCount()):
+            state = []
+            for row in range(self.node_table.rowCount()):
+                value = self.node_table.item(row, col).text() if self.node_table.item(row, col) else "0"
+                state.append(int(value))
+            simulation_data.append(tuple(state))
+
+        t_single = int(self.duration_input.text())
+        simulator.simulate_sequence(my_grn, simulation_data, t_single=t_single)
 
     # --- Build a MyGRN and plot ---
     def plot_grn(self):
