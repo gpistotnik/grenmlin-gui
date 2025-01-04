@@ -230,6 +230,15 @@ class EdgeItem(QGraphicsLineItem):
         if self.target_node:
             tx = self.target_node.x() + self.target_node.diameter / 2
             ty = self.target_node.y() + self.target_node.diameter / 2
+
+            # Calculate the angle between source and target
+            angle = math.atan2(ty - sy, tx - sx)
+
+            # Adjust the positions to be at the edge of the circles
+            sx += (self.source_node.diameter / 2) * math.cos(angle)
+            sy += (self.source_node.diameter / 2) * math.sin(angle)
+            tx -= (self.target_node.diameter / 2) * math.cos(angle)
+            ty -= (self.target_node.diameter / 2) * math.sin(angle)
         else:
             tx, ty = sx, sy
 
@@ -539,12 +548,6 @@ class MainWindow(QMainWindow):
         nx.draw_networkx_labels(my_grn.G, pos, labels=labels, font_size=10, font_color='white')
 
         my_grn.plot_network()
-
-
-
-
-
-
 
 def main():
     app = QApplication(sys.argv)
