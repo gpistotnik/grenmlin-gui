@@ -7,10 +7,11 @@ matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
 
+
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QAction,
     QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsLineItem, QDialog,
-    QMessageBox, QInputDialog, QGraphicsItem, QVBoxLayout, QLineEdit, QPushButton, QLabel, QTableWidget, QTableWidgetItem
+    QMessageBox, QInputDialog, QGraphicsItem, QVBoxLayout, QLineEdit, QPushButton, QLabel, QTableWidget, QTableWidgetItem, QFileDialog
 )
 from PyQt5.QtGui import (
     QPainter, QPen, QBrush, QColor, QFont, QPolygonF
@@ -496,6 +497,17 @@ class MainWindow(QMainWindow):
         self.act_plot.triggered.connect(self.plot_grn)
         self.toolbar.addAction(self.act_plot)
 
+        # Import/Export NX Graph
+        self.act_import_sbml = QAction("Import NX Graph (SBML)", self)
+        self.act_import_sbml.triggered.connect(self.import_nx_graph)
+        self.toolbar.addAction(self.act_import_sbml)
+
+        self.act_export_sbml = QAction("Export NX Graph (SBML)", self)
+        self.act_export_sbml.triggered.connect(self.export_nx_graph)
+        self.toolbar.addAction(self.act_export_sbml)
+
+
+
     def on_edge_mode_toggled(self, checked: bool):
         self.scene.set_edge_mode(checked)
 
@@ -576,6 +588,50 @@ class MainWindow(QMainWindow):
         self.node_table.setHorizontalHeaderItem(column_count, QTableWidgetItem(f"Interval {column_count}"))
         for row in range(self.node_table.rowCount()):
             self.node_table.setItem(row, column_count, QTableWidgetItem("50"))
+
+    def import_nx_graph(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open NX Graph (GraphML File)", "", "GraphML Files (*.graphml)")
+        if file_name:
+            self.graph = nx.read_graphml(file_name)
+            self.scene.clear()
+            self.node_inputs.clear()
+            self.input_counter = 1
+            self.output_counter = 1
+            self.input_position = [50, 50]
+            self.output_position = [300, 50]
+
+            for node, data in self.graph.nodes(data=True):
+                node_type = data.get('node_type', 'normal')
+                if node_type == 'input':
+                    self.add_input_node()
+                elif node_type == 'output':
+                    self.add_output_node()
+                else:
+                    node_data = {"label": node, "node_type": node_type}
+                    node_item = NodeItem(0, 0, diameter=50, node_data=node_data)
+                    self.scene.addItem(node_item)
+
+            for source, target, data in self.graph.edges(data=True):
+                source_node = next(item for item in self.scene.items() if isinstance(item, NodeItem) and item.node_data['label'] == source)
+                target_node = next(item for item in self.scene.items() if isinstance(item, NodeItem) and item.node_data['label'] == target)
+                edge_item = EdgeItem(source_node, target_node)
+                edge_item.edge_data = data
+                self.scene.addItem(edge_item)
+
+            QMessageBox.information(self, "Import Complete", f"NX Graph imported from {file_name}")
+
+    def export_nx_graph(self):
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save NX Graph (GraphML File)", "", "GraphML Files (*.graphml)")
+        if file_name:
+            graph = nx.DiGraph()
+            for item in self.scene.items():
+                if isinstance(item, NodeItem):
+                    graph.add_node(item.node_data['label'], **item.node_data)
+                elif isinstance(item, EdgeItem):
+                    graph.add_edge(item.source_node.node_data['label'], item.target_node.node_data['label'], **item.edge_data)
+            nx.write_graphml(graph, file_name)
+            QMessageBox.information(self, "Export Complete", f"NX Graph exported to {file_name}")
+
 
     def plot_simulation(self):
         import grn
