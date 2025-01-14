@@ -301,6 +301,7 @@ class EdgeItem(QGraphicsLineItem):
         new_n, ok = QInputDialog.getDouble(None, "Edit Edge n",
                                            "Hill coefficient n:",
                                            value=current_n)
+        
         if ok:
             self.edge_data["n"] = new_n
 
@@ -516,7 +517,7 @@ class MainWindow(QMainWindow):
         node_data = {"label": f"I{self.input_counter}", "node_type": "input"}
         node = NodeItem(self.input_position[0], self.input_position[1], diameter=50, node_data=node_data)
         self.scene.addItem(node)
-        self.node_inputs[node_data['label']] = []
+        self.node_inputs[node_data['label']] = node
         self.input_counter += 1
         self.input_position[1] += self.node_spacing
 
@@ -558,7 +559,7 @@ class MainWindow(QMainWindow):
         self.node_table.setHorizontalHeaderLabels(["Node"])
         self.node_table.setRowCount(len(self.node_inputs))
         for row, node in enumerate(self.node_inputs.keys()):
-            item = QTableWidgetItem(node)
+            item = QTableWidgetItem(self.node_inputs[node].node_data["label"])
             item.setFlags(Qt.ItemIsEnabled)  # Make node names uneditable
             self.node_table.setItem(row, 0, item)
         layout.addWidget(self.node_table)
@@ -639,10 +640,9 @@ class MainWindow(QMainWindow):
 
         my_grn = grn.grn()
 
-        # Add input species
-        for node in self.node_inputs.keys():
-            if node.startswith('I'):
-                my_grn.add_input_species(node)
+        for item in self.scene.items():
+            if isinstance(item, NodeItem) and item.node_data.get('node_type') == 'input':
+                my_grn.add_input_species(item.node_data.get('label'))
 
         # Add output species
         for item in self.scene.items():
@@ -654,7 +654,10 @@ class MainWindow(QMainWindow):
             if isinstance(item, EdgeItem):
                 src_label = item.source_node.node_data.get('label')
                 tgt_label = item.target_node.node_data.get('label')
-                regulators = [{'name': src_label, 'type': 1, 'Kd': 5, 'n': 2}]
+                edge_type = item.edge_data.get("type", 0)
+                edge_kd = item.edge_data.get("Kd", 1.0)
+                edge_n = item.edge_data.get("n", 1.0)
+                regulators = [{'name': src_label, 'type': edge_type, 'Kd': edge_kd, 'n': edge_n}]
                 products = [{'name': tgt_label}]
                 my_grn.add_gene(10, regulators, products)
 
