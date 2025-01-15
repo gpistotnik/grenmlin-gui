@@ -678,9 +678,8 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Export Complete", f"NX Graph exported to {file_name}")
 
 
-    def plot_simulation(self):
+    def build_grn(self):
         import grn
-        import simulator
 
         my_grn = grn.grn()
 
@@ -714,6 +713,13 @@ class MainWindow(QMainWindow):
                 alpha = geneNodes.node_data.get('alpha', 10)
                 logic_type = geneNodes.node_data.get('logic_type', 'and')
                 my_grn.add_gene(alpha, regulators, products, logic_type)
+        
+        return my_grn
+
+    def plot_simulation(self):
+        import simulator
+
+        my_grn = self.build_grn()
 
         # Prepare simulation data
         simulation_data = []
@@ -725,37 +731,11 @@ class MainWindow(QMainWindow):
             simulation_data.append(tuple(state))
 
         t_single = int(self.duration_input.text())
-        
         simulator.simulate_sequence(my_grn, simulation_data, t_single=t_single)
 
     # --- Build a MyGRN and plot ---
     def plot_grn(self):
-        my_grn = MyGRN()
-        for item in self.scene.items():
-            if isinstance(item, NodeItem):
-                label = item.node_data.get("label", "???")
-                node_type = item.node_data.get("node_type", "normal")
-                if node_type == "input":
-                    my_grn.add_input_species(label)
-                elif node_type == "output":
-                    my_grn.add_species(label, degrade_rate=0.1)
-                else:
-                    my_grn.add_species(label, degrade_rate=0.05)
-
-        for item in self.scene.items():
-            if isinstance(item, EdgeItem):
-                src_label = item.source_node.node_data.get("label", "???")
-                tgt_label = item.target_node.node_data.get("label", "???")
-                reg_type = item.edge_data.get("type", 0)
-                kd = item.edge_data.get("Kd", 1.0)
-                n = item.edge_data.get("n", 1.0)
-                my_grn.add_edge(src_label, tgt_label, reg_type, kd, n)
-
-        # Use simple node labels
-        pos = nx.spring_layout(my_grn.G)
-        labels = {node: node for node in my_grn.G.nodes}
-        nx.draw_networkx_labels(my_grn.G, pos, labels=labels, font_size=10, font_color='white')
-
+        my_grn = self.build_grn()
         my_grn.plot_network()
 
 def main():
