@@ -646,6 +646,8 @@ class MainWindow(QMainWindow):
                     self.add_input_node()
                 elif node_type == 'output':
                     self.add_output_node()
+                elif node_type == 'gene':
+                    self.add_gene_node()
                 else:
                     node_data = {"label": node, "node_type": node_type}
                     node_item = NodeItem(0, 0, diameter=50, node_data=node_data)
@@ -688,23 +690,25 @@ class MainWindow(QMainWindow):
             if isinstance(item, NodeItem) and item.node_data.get('node_type') == 'output':
                 my_grn.add_species(item.node_data.get('label'), 0.1)
 
-        # Add genes with regulators from edges
-        for item in self.scene.items():
-            if isinstance(item, EdgeItem):
-                src_label = item.source_node.node_data.get('label')
-                tgt_label = item.target_node.node_data.get('label')
-                edge_type = item.edge_data.get("type", 0)
-                edge_kd = item.edge_data.get("Kd", 1.0)
-                edge_n = item.edge_data.get("n", 1.0)
+        for geneNodes in self.scene.items():
+            if isinstance(geneNodes, NodeItem) and geneNodes.node_data.get('node_type') == 'gene':
+                regulators = [] # Map incomming edges to regulators
+                products = [] # Map outgoing edges to products
+                for edge in self.scene.items():
+                    if isinstance(edge, EdgeItem):
+                        sourceNode = edge.source_node
+                        targetNode = edge.target_node
 
-                if edge_type == 0:
-                    regulators = [{'name': src_label, 'type': -1, 'Kd': edge_kd, 'n': edge_n}, {'name': src_label, 'type': 1, 'Kd': edge_kd, 'n': edge_n}]
-                    products = [{'name': tgt_label}]
-                    my_grn.add_gene(10, regulators, products)
-                else:
-                    regulators = [{'name': src_label, 'type': edge_type, 'Kd': edge_kd, 'n': edge_n}]
-                    products = [{'name': tgt_label}]
-                    my_grn.add_gene(10, regulators, products)
+                        if (sourceNode == geneNodes):
+                            products.append({'name': targetNode.node_data.get('label')})
+                        elif (targetNode == geneNodes):
+                            src_label = edge.source_node.node_data.get('label')
+                            edge_type = edge.edge_data.get("type", 1)
+                            edge_kd = edge.edge_data.get("Kd", 1.0)
+                            edge_n = edge.edge_data.get("n", 1.0)
+                            regulators.append({'name': src_label, 'type': edge_type, 'Kd': edge_kd, 'n': edge_n})
+
+                my_grn.add_gene(10, regulators, products)
 
         # Prepare simulation data
         simulation_data = []
