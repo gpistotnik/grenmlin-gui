@@ -475,8 +475,8 @@ class MainWindow(QMainWindow):
         self.output_counter = 1
         self.gene_counter = 1
         self.input_position = [50, 50]
-        self.output_position = [300, 50]
-        self.gene_position = [600, 50]
+        self.gene_position = [200, 50]
+        self.output_position = [400, 50]
         self.node_spacing = 60
 
         # Simulation Parameters
@@ -637,8 +637,8 @@ class MainWindow(QMainWindow):
             self.input_counter = 1
             self.output_counter = 1
             self.input_position = [50, 50]
-            self.output_position = [300, 50]
-            self.gene_position = [600, 50]
+            self.gene_position = [200, 50]
+            self.output_position = [400, 50]
 
             for node, data in self.graph.nodes(data=True):
                 node_type = data.get('node_type', 'normal')
@@ -708,7 +708,9 @@ class MainWindow(QMainWindow):
                             edge_n = edge.edge_data.get("n", 1.0)
                             regulators.append({'name': src_label, 'type': edge_type, 'Kd': edge_kd, 'n': edge_n})
 
-                my_grn.add_gene(10, regulators, products)
+                alpha = geneNodes.node_data.get('alpha', 10)
+                logic_type = geneNodes.node_data.get('logic_type', 'and')
+                my_grn.add_gene(alpha, regulators, products, logic_type)
 
         # Prepare simulation data
         simulation_data = []
