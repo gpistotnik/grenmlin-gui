@@ -463,47 +463,47 @@ class MainWindow(QMainWindow):
         self.addToolBar(self.toolbar)
 
         # Edge Mode toggle
-        self.act_edge_mode = QAction("Edge Mode", self)
+        self.act_edge_mode = QAction("Edge Mode ⛓️", self)
         self.act_edge_mode.setCheckable(True)
         self.act_edge_mode.toggled.connect(self.on_edge_mode_toggled)
         self.toolbar.addAction(self.act_edge_mode)
 
         # Add Input Node
-        self.act_add_input = QAction("Add Input Node", self)
+        self.act_add_input = QAction("➕ Add Input Node 🟢", self)
         self.act_add_input.triggered.connect(self.add_input_node)
         self.toolbar.addAction(self.act_add_input)
 
         # Add Output Node
-        self.act_add_output = QAction("Add Output Node", self)
+        self.act_add_output = QAction("➕ Add Output Node 🔴", self)
         self.act_add_output.triggered.connect(self.add_output_node)
         self.toolbar.addAction(self.act_add_output)
 
         # Delete Node
-        self.act_delete_node = QAction("Delete Selected Node", self)
+        self.act_delete_node = QAction("🗑️ Delete Selected Node 🟢", self)
         self.act_delete_node.triggered.connect(self.delete_selected_node)
         self.toolbar.addAction(self.act_delete_node)
 
         # Delete Edge
-        self.act_delete_edge = QAction("Delete Selected Edge", self)
+        self.act_delete_edge = QAction("🗑️ Delete Selected Edge 🔗", self)
         self.act_delete_edge.triggered.connect(self.delete_selected_edge)
         self.toolbar.addAction(self.act_delete_edge)
 
         # Simulation Controls
-        self.act_simulation = QAction("Open Simulation GUI", self)
+        self.act_simulation = QAction("🛠️ Open Simulation GUI", self)
         self.act_simulation.triggered.connect(self.open_simulation_gui)
         self.toolbar.addAction(self.act_simulation)
 
         # Plot GRN
-        self.act_plot = QAction("Plot GRN", self)
+        self.act_plot = QAction("🌐 Plot GRN 🌐", self)
         self.act_plot.triggered.connect(self.plot_grn)
         self.toolbar.addAction(self.act_plot)
 
         # Import/Export NX Graph
-        self.act_import_sbml = QAction("Import NX Graph (SBML)", self)
+        self.act_import_sbml = QAction("📥 Import NX Graph (SBML) 📂", self)
         self.act_import_sbml.triggered.connect(self.import_nx_graph)
         self.toolbar.addAction(self.act_import_sbml)
 
-        self.act_export_sbml = QAction("Export NX Graph (SBML)", self)
+        self.act_export_sbml = QAction("📤 Export NX Graph (SBML) 📁", self)
         self.act_export_sbml.triggered.connect(self.export_nx_graph)
         self.toolbar.addAction(self.act_export_sbml)
 
@@ -565,18 +565,18 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.node_table)
 
         # Add Interval States Button
-        self.add_interval_btn = QPushButton("Add Interval State")
+        self.add_interval_btn = QPushButton("📊 Add Interval State")
         self.add_interval_btn.clicked.connect(self.add_interval_column)
         layout.addWidget(self.add_interval_btn)
 
         # Duration Input
         self.duration_input = QLineEdit(str(self.simulation_duration))
-        self.duration_input.setPlaceholderText("Set Simulation Duration")
+        self.duration_input.setPlaceholderText("⌛ Set Simulation Duration")
         layout.addWidget(QLabel("Simulation Duration:"))
         layout.addWidget(self.duration_input)
 
         # Plot Button
-        self.plot_btn = QPushButton("Plot Simulation")
+        self.plot_btn = QPushButton("📊 Plot Simulation")
         self.plot_btn.clicked.connect(self.plot_simulation)
         layout.addWidget(self.plot_btn)
 
