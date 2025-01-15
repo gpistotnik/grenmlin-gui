@@ -192,7 +192,7 @@ class NodeItem(QGraphicsEllipseItem):
                 self.node_data["logic_type"] = new_logic
                 self.update()
             else:
-                print("Error: Logic type should be either 'and'/'or'.")
+                print("Error: Logic type should be either 'and' / 'or'.")
         
         super().mouseDoubleClickEvent(event)
 
@@ -214,10 +214,10 @@ class EdgeItem(QGraphicsLineItem):
         self.target_node = target_node
 
         # Default edge data:
-        #   type: 1 => activation, -1 => repression, 0 => unknown
+        #   type: 1 => activation, -1 => repression
         #   Kd, n: example param values
         self.edge_data = {
-            "type": 0,
+            "type": 1,
             "Kd": 1.0,
             "n": 1.0
         }
@@ -307,10 +307,13 @@ class EdgeItem(QGraphicsLineItem):
         # Edit 'type'
         current_type = self.edge_data.get("type", 0)
         new_type, ok = QInputDialog.getInt(None, "Edit Edge Type",
-                                           "Type (-1, 0, or 1):",
+                                           "Type (-1 or 1):",
                                            value=current_type)
-        if ok:
+        if ok and new_type in [-1, 1]:
             self.edge_data["type"] = new_type
+            self.pen_inactive.setColor(QColor("red"))
+        else:
+            print("Error: Edge type should be either -1 / 1.")
 
         # Edit 'Kd'
         current_kd = self.edge_data.get("Kd", 1.0)
