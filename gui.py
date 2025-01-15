@@ -484,7 +484,7 @@ class GraphScene(QGraphicsScene):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("NPMP Grenmlin GUI")
+        self.setWindowTitle("GReNMlin GUI")
 
         # a) Scene & View
         self.scene = GraphScene()
@@ -528,12 +528,12 @@ class MainWindow(QMainWindow):
         self.toolbar.addAction(self.act_add_output)
 
         # Add Gene Node
-        self.act_add_gene = QAction("Add Gene Node", self)
+        self.act_add_gene = QAction("➕ Add Gene Node ⚫", self)
         self.act_add_gene.triggered.connect(self.add_gene_node)
         self.toolbar.addAction(self.act_add_gene)
 
         # Delete Node
-        self.act_delete_node = QAction("🗑️ Delete Selected Node 🟢", self)
+        self.act_delete_node = QAction("🗑️ Delete Selected Node 🟣", self)
         self.act_delete_node.triggered.connect(self.delete_selected_node)
         self.toolbar.addAction(self.act_delete_node)
 
@@ -548,16 +548,16 @@ class MainWindow(QMainWindow):
         self.toolbar.addAction(self.act_simulation)
 
         # Plot GRN
-        self.act_plot = QAction("🌐 Plot GRN 🌐", self)
+        self.act_plot = QAction("🌐 Plot GRN", self)
         self.act_plot.triggered.connect(self.plot_grn)
         self.toolbar.addAction(self.act_plot)
 
         # Import/Export NX Graph
-        self.act_import_sbml = QAction("📥 Import NX Graph (SBML) 📂", self)
+        self.act_import_sbml = QAction("📥 Import NX Graph (SBML)", self)
         self.act_import_sbml.triggered.connect(self.import_nx_graph)
         self.toolbar.addAction(self.act_import_sbml)
 
-        self.act_export_sbml = QAction("📤 Export NX Graph (SBML) 📁", self)
+        self.act_export_sbml = QAction("📤 Export NX Graph (SBML)", self)
         self.act_export_sbml.triggered.connect(self.export_nx_graph)
         self.toolbar.addAction(self.act_export_sbml)
 
@@ -626,7 +626,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.node_table)
 
         # Add Interval States Button
-        self.add_interval_btn = QPushButton("📊 Add Interval State")
+        self.add_interval_btn = QPushButton("📈 Add Interval State")
         self.add_interval_btn.clicked.connect(self.add_interval_column)
         layout.addWidget(self.add_interval_btn)
 
