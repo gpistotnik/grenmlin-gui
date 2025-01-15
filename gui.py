@@ -478,8 +478,8 @@ class MainWindow(QMainWindow):
         self.output_counter = 1
         self.gene_counter = 1
         self.input_position = [50, 50]
-        self.output_position = [300, 50]
-        self.gene_position = [600, 50]
+        self.gene_position = [200, 50]
+        self.output_position = [400, 50]
         self.node_spacing = 60
 
         # Simulation Parameters
@@ -640,8 +640,8 @@ class MainWindow(QMainWindow):
             self.input_counter = 1
             self.output_counter = 1
             self.input_position = [50, 50]
-            self.output_position = [300, 50]
-            self.gene_position = [600, 50]
+            self.gene_position = [200, 50]
+            self.output_position = [400, 50]
 
             for node, data in self.graph.nodes(data=True):
                 node_type = data.get('node_type', 'normal')
@@ -649,6 +649,8 @@ class MainWindow(QMainWindow):
                     self.add_input_node()
                 elif node_type == 'output':
                     self.add_output_node()
+                elif node_type == 'gene':
+                    self.add_gene_node()
                 else:
                     node_data = {"label": node, "node_type": node_type}
                     node_item = NodeItem(0, 0, diameter=50, node_data=node_data)
@@ -691,23 +693,27 @@ class MainWindow(QMainWindow):
             if isinstance(item, NodeItem) and item.node_data.get('node_type') == 'output':
                 my_grn.add_species(item.node_data.get('label'), 0.1)
 
-        # Add genes with regulators from edges
-        for item in self.scene.items():
-            if isinstance(item, EdgeItem):
-                src_label = item.source_node.node_data.get('label')
-                tgt_label = item.target_node.node_data.get('label')
-                edge_type = item.edge_data.get("type", 0)
-                edge_kd = item.edge_data.get("Kd", 1.0)
-                edge_n = item.edge_data.get("n", 1.0)
+        for geneNodes in self.scene.items():
+            if isinstance(geneNodes, NodeItem) and geneNodes.node_data.get('node_type') == 'gene':
+                regulators = [] # Map incomming edges to regulators
+                products = [] # Map outgoing edges to products
+                for edge in self.scene.items():
+                    if isinstance(edge, EdgeItem):
+                        sourceNode = edge.source_node
+                        targetNode = edge.target_node
 
-                if edge_type == 0:
-                    regulators = [{'name': src_label, 'type': -1, 'Kd': edge_kd, 'n': edge_n}, {'name': src_label, 'type': 1, 'Kd': edge_kd, 'n': edge_n}]
-                    products = [{'name': tgt_label}]
-                    my_grn.add_gene(10, regulators, products)
-                else:
-                    regulators = [{'name': src_label, 'type': edge_type, 'Kd': edge_kd, 'n': edge_n}]
-                    products = [{'name': tgt_label}]
-                    my_grn.add_gene(10, regulators, products)
+                        if (sourceNode == geneNodes):
+                            products.append({'name': targetNode.node_data.get('label')})
+                        elif (targetNode == geneNodes):
+                            src_label = edge.source_node.node_data.get('label')
+                            edge_type = edge.edge_data.get("type", 1)
+                            edge_kd = edge.edge_data.get("Kd", 1.0)
+                            edge_n = edge.edge_data.get("n", 1.0)
+                            regulators.append({'name': src_label, 'type': edge_type, 'Kd': edge_kd, 'n': edge_n})
+
+                alpha = geneNodes.node_data.get('alpha', 10)
+                logic_type = geneNodes.node_data.get('logic_type', 'and')
+                my_grn.add_gene(alpha, regulators, products, logic_type)
 
         # Prepare simulation data
         simulation_data = []
