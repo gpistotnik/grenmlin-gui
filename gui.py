@@ -191,7 +191,7 @@ class NodeItem(QGraphicsEllipseItem):
             if ok and new_logic in ['and', 'or']:
                 self.node_data["logic_type"] = new_logic
                 self.update()
-            else:
+            elif ok:
                 print("Error: Logic type should be either 'and' / 'or'.")
         
         super().mouseDoubleClickEvent(event)
@@ -223,9 +223,14 @@ class EdgeItem(QGraphicsLineItem):
         }
 
         # Styling
-        self.pen_inactive = QPen(QColor("gray"), 2)
-        self.pen_active = QPen(QColor("cyan"), 2)
-        self.setPen(self.pen_inactive)
+        self.pen_inactive = QPen(QColor("gray"), 3)
+        self.pen_active = QPen(QColor("cyan"), 3)
+
+        # Styling
+        self.pen_inactive_activation = QPen(QColor("blue"), 3)  # Green for activation
+        self.pen_inactive_repression = QPen(QColor("red"), 3)   # Red for repression
+
+        self.setPen(self.get_inactive_pen())
         self.setFlags(self.ItemIsSelectable)
 
         # Register with source
@@ -242,6 +247,15 @@ class EdgeItem(QGraphicsLineItem):
         self.target_node = node
         self.target_node.add_edge(self)
         self.update_positions()
+
+    def get_inactive_pen(self):
+        """
+        Returns the inactive pen color based on the edge type.
+        """
+        if self.edge_data["type"] == 1:
+            return self.pen_inactive_activation
+        else:
+            return self.pen_inactive_repression
 
     def update_positions(self):
         """
@@ -270,12 +284,16 @@ class EdgeItem(QGraphicsLineItem):
         self.setLine(sx, sy, tx, ty)
 
     def paint(self, painter, option, widget=None):
+
+        pen = self.pen()
+
         # Highlight if selected
         if self.isSelected():
-            painter.setPen(self.pen_active)
+            painter.setPen(self.pen_active.color())
         else:
-            painter.setPen(self.pen_inactive)
+            painter.setPen(self.get_inactive_pen().color())
 
+        painter.setPen(pen)
         line = self.line()
         painter.drawLine(line)
 
@@ -295,6 +313,7 @@ class EdgeItem(QGraphicsLineItem):
                 ex - arrow_size * math.cos(angle + arrow_angle),
                 ey - arrow_size * math.sin(angle + arrow_angle)
             )
+
             polygon = QPolygonF([QPointF(ex, ey), p1, p2])
             painter.drawPolygon(polygon)
 
@@ -311,8 +330,9 @@ class EdgeItem(QGraphicsLineItem):
                                            value=current_type)
         if ok and new_type in [-1, 1]:
             self.edge_data["type"] = new_type
-            self.pen_inactive.setColor(QColor("red"))
-        else:
+            self.setPen(self.get_inactive_pen())
+            self.update()
+        elif ok:
             print("Error: Edge type should be either -1 / 1.")
 
         # Edit 'Kd'
