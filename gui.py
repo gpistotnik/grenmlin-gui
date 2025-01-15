@@ -170,6 +170,30 @@ class NodeItem(QGraphicsEllipseItem):
         if ok and new_label.strip():
             self.node_data["label"] = new_label.strip()
             self.update()
+        
+        if self.node_data["node_type"] == "gene":
+            current_alpha = self.node_data.get("alpha", 10)
+            new_alpha, ok = QInputDialog.getInt(
+                None, "Edit Alpha",
+                "Alpha:",
+                value=current_alpha
+            )
+            if ok:
+                self.node_data["alpha"] = new_alpha
+                self.update()
+            
+            current_logic = self.node_data.get("logic_type", "and")
+            new_logic, ok = QInputDialog.getText(
+                None, "Edit Logic Type",
+                "Logic Type ('and', 'or'):",
+                text=current_logic
+            )
+            if ok and new_logic in ['and', 'or']:
+                self.node_data["logic_type"] = new_logic
+                self.update()
+            else:
+                print("Error: Logic type should be either 'and'/'or'.")
+        
         super().mouseDoubleClickEvent(event)
 
 
@@ -536,7 +560,7 @@ class MainWindow(QMainWindow):
         self.output_position[1] += self.node_spacing
 
     def add_gene_node(self):
-        node_data = {"label": f"G{self.gene_counter}", "node_type": "gene"}
+        node_data = {"label": f"G{self.gene_counter}", "node_type": "gene", "alpha": 10, "logic_type": "and"}
         node = NodeItem(self.gene_position[0], self.gene_position[1], diameter=50, node_data=node_data)
         self.scene.addItem(node)
         self.gene_counter += 1
