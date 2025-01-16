@@ -193,6 +193,16 @@ class NodeItem(QGraphicsEllipseItem):
                 self.update()
             elif ok:
                 print("Error: Logic type should be either 'and' / 'or'.")
+        elif self.node_data["node_type"] == "output":
+            current_deg_rate = self.node_data.get("deg_rate", 0.1)
+            new_deg_rate, ok = QInputDialog.getDouble(
+                None, "Edit degradation rate",
+                "Degradation rate:",
+                value=current_deg_rate
+            )
+            if ok and new_deg_rate is not None:
+                self.node_data["deg_rate"] = new_deg_rate
+                self.update()
         
         super().mouseDoubleClickEvent(event)
 
@@ -576,7 +586,7 @@ class MainWindow(QMainWindow):
         self.input_position[1] += self.node_spacing
 
     def add_output_node(self):
-        node_data = {"label": f"O{self.output_counter}", "node_type": "output"}
+        node_data = {"label": f"O{self.output_counter}", "node_type": "output", "deg_rate": 0.1}
         node = NodeItem(self.output_position[0], self.output_position[1], diameter=50, node_data=node_data)
         self.scene.addItem(node)
         self.output_counter += 1
@@ -710,7 +720,7 @@ class MainWindow(QMainWindow):
         # Add output species
         for item in self.scene.items():
             if isinstance(item, NodeItem) and item.node_data.get('node_type') == 'output':
-                my_grn.add_species(item.node_data.get('label'), 0.1)
+                my_grn.add_species(item.node_data.get('label'), item.node_data.get('deg_rate'))
 
         for geneNodes in self.scene.items():
             if isinstance(geneNodes, NodeItem) and geneNodes.node_data.get('node_type') == 'gene':
