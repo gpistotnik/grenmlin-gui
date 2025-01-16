@@ -669,6 +669,7 @@ class MainWindow(QMainWindow):
             self.node_inputs.clear()
             self.input_counter = 1
             self.output_counter = 1
+            self.gene_counter = 1
             self.input_position = [50, 50]
             self.gene_position = [200, 50]
             self.output_position = [400, 50]
@@ -690,9 +691,11 @@ class MainWindow(QMainWindow):
                 source_node = next(item for item in self.scene.items() if isinstance(item, NodeItem) and item.node_data['label'] == source)
                 target_node = next(item for item in self.scene.items() if isinstance(item, NodeItem) and item.node_data['label'] == target)
                 edge_item = EdgeItem(source_node, target_node)
-                edge_item.edge_data = data
+                edge_item.edge_data["type"] = data['type']
+                edge_item.edge_data["Kd"] = data['Kd']
+                edge_item.edge_data["n"] = data['n']
+                edge_item.setPen(edge_item.get_inactive_pen())
                 self.scene.addItem(edge_item)
-
             QMessageBox.information(self, "Import Complete", f"NX Graph imported from {file_name}")
 
     def export_nx_graph(self):
