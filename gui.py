@@ -676,26 +676,23 @@ class MainWindow(QMainWindow):
 
             for node, data in self.graph.nodes(data=True):
                 node_type = data.get('node_type', 'normal')
+                x = data.get('x', 0)
+                y = data.get('y', 0)
+                node_data = {"label": node, "node_type": node_type}
+                node_data.update(data)
+                node_item = NodeItem(x, y, diameter=50, node_data=node_data)
+                self.scene.addItem(node_item)
                 if node_type == 'input':
-                    self.add_input_node()
-                elif node_type == 'output':
-                    self.add_output_node()
-                elif node_type == 'gene':
-                    self.add_gene_node()
-                else:
-                    node_data = {"label": node, "node_type": node_type}
-                    node_item = NodeItem(0, 0, diameter=50, node_data=node_data)
-                    self.scene.addItem(node_item)
+                    self.node_inputs[node] = node_item
 
             for source, target, data in self.graph.edges(data=True):
                 source_node = next(item for item in self.scene.items() if isinstance(item, NodeItem) and item.node_data['label'] == source)
                 target_node = next(item for item in self.scene.items() if isinstance(item, NodeItem) and item.node_data['label'] == target)
                 edge_item = EdgeItem(source_node, target_node)
-                edge_item.edge_data["type"] = data['type']
-                edge_item.edge_data["Kd"] = data['Kd']
-                edge_item.edge_data["n"] = data['n']
+                edge_item.edge_data.update(data)
                 edge_item.setPen(edge_item.get_inactive_pen())
                 self.scene.addItem(edge_item)
+
             QMessageBox.information(self, "Import Complete", f"NX Graph imported from {file_name}")
 
     def export_nx_graph(self):
@@ -704,7 +701,10 @@ class MainWindow(QMainWindow):
             graph = nx.DiGraph()
             for item in self.scene.items():
                 if isinstance(item, NodeItem):
-                    graph.add_node(item.node_data['label'], **item.node_data)
+                    node_data = item.node_data.copy()
+                    node_data['x'] = item.x()
+                    node_data['y'] = item.y()
+                    graph.add_node(item.node_data['label'], **node_data)
                 elif isinstance(item, EdgeItem):
                     graph.add_edge(item.source_node.node_data['label'], item.target_node.node_data['label'], **item.edge_data)
             nx.write_graphml(graph, file_name)
